@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách lương nhân viên</title>
+</head>
+<body>
+    <h1>Danh sách lương nhân viên</h1>
+
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Tên nhân viên</th>
+            <th>Chức vụ</th>
+            <th>Lương</th>
+            <th>Hệ số</th>
+        </tr>
+
+        {% for s in view_salary %}
+        <tr>
+            <td>{{ s.username }}</td>
+            <td>{{ s.rank }}</td>
+            <td>{{ s.amount }}</td>
+            <td>{{ s.multiplier }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
