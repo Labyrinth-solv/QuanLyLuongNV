@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import pymysql.cursors
 from django.db import connection
 from pymysql.cursors import DictCursor
@@ -16,16 +16,120 @@ conn = pymysql.connect(
     cursorclass=DictCursor
 )
 # Create your views here.
-def viewStaffSalary(request):
-    cursor=conn.cursor(DictCursor)
-    sql='''
-        SELECT s1.username, s2.rank, s2.amount, s2.multiplier
-        from staffprofile s
-        join person s1 on s1.id=s.staff_id
-        join salary s2 on s2.salary_id=s.salary_id
-    '''
-    cursor.execute(sql)
-    view_salary=cursor.fetchall()
+def view_salary(request):
+    salary_data = None
+    salary_id = request.GET.get('salary_id')  # Lấy từ hidden input khi ấn
+
+    # Nếu GET có salary_id → lấy dữ liệu để hiển thị trên form
+    if salary_id:
+        cursor = conn.cursor(DictCursor)
+        cursor.execute("SELECT * FROM salary WHERE salary_id=%s", (salary_id,))
+        salary_data = cursor.fetchone()
+        cursor.close()
+
+    # Nếu POST (submit form sửa)
+    if request.method == 'POST':
+        salary_id = request.POST.get('salary_id')
+        salary_rank = request.POST.get('salary_rank')
+        amount = request.POST.get('amount')
+        multiplier = request.POST.get('multiplier')
+
+        cursor = conn.cursor(DictCursor)
+        # 1. Lấy dữ liệu cũ
+        cursor.execute("SELECT `rank`, amount, multiplier FROM salary WHERE salary_id=%s", (salary_id,))
+        old = cursor.fetchone()
+
+        old_rank = old["rank"]
+        old_amount = old["amount"]
+        old_multiplier = old["multiplier"]
+
+        #2: Update bảng salary
+        cursor.execute(
+            "UPDATE salary SET `rank`=%s, amount=%s, multiplier=%s WHERE salary_id=%s",
+            (salary_rank, amount, multiplier, salary_id)
+        )
+
+        # 3. Ghi lịch sử thay đổi
+        cursor.execute(
+            """
+            INSERT INTO salarychangehistory(
+                salary_id, old_rank, new_rank,
+                old_amount, new_amount,
+                old_multiplier, new_multiplier,
+                change_date
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+            """,
+            (salary_id,
+             old_rank, salary_rank,
+             old_amount, amount,
+             old_multiplier, multiplier)
+        )
+        conn.commit()
+        cursor.close()
+        return redirect('payroll:view_salary')  # Reload bảng sau khi sửa
+
+    cursor = conn.cursor(DictCursor)
+    cursor.execute("SELECT * FROM salary")
+    salary_list = cursor.fetchall()
     cursor.close()
 
-    return render(request, 'view_staff_salary.html', {'view_salary':view_salary})
+    return render(request, 'view_salary.html', {
+        'salary': salary_list,
+        'edit_salary': salary_data,  # None nếu chưa chọn dòng
+    })
+
+def add_salary(request):
+    if request.method == 'POST':
+        salary_id = request.POST.get('salary_id')
+        salary_rank = request.POST.get('salary_rank')
+        amount = request.POST.get('amount')
+        multiplier = request.POST.get('multiplier')
+        cursor=conn.cursor(DictCursor)
+        sql='''
+            INSERT INTO salary (salary_id, `rank`, amount, multiplier)
+                VALUES (%s, %s, %s, %s)
+        '''
+        cursor.execute(sql, (salary_id, salary_rank, amount, multiplier))
+        cursor.close()
+        conn.commit()
+        return redirect('payroll:view_salary')
+    return render(request, 'add_salary.html')
+
+def edit_salary(request):
+    if request.method == 'POST':
+        salary_id = request.POST.get('salary_id')
+        rank = request.POST.get('salary_rank')
+        amount = request.POST.get('amount')
+        multiplier = request.POST.get('multiplier')
+
+        cursor = conn.cursor(DictCursor)
+        cursor.execute(
+            "UPDATE salary SET salary_rank=%s, amount=%s, multiplier=%s WHERE salary_id=%s",
+            (rank, amount, multiplier, salary_id)
+        )
+        conn.commit()
+        cursor.close()
+
+    return redirect('payroll:view_salary')
+
+def view_history_salary(request):
+    if request.method=='POST':
+        history_id=request.POST.get('history_id')
+        cursor=conn.cursor(DictCursor)
+        cursor.execute('''
+            DELETE from salarychangehistory
+            where history_id=%s
+        ''', (history_id,))
+        conn.commit()
+        cursor.close()
+        return redirect('payroll:view_history_salary')
+    cursor=conn.cursor(DictCursor)
+    sql=''' 
+        select * from salarychangehistory
+    '''
+    cursor.execute(sql)
+    histories=cursor.fetchall()
+    cursor.close()
+
+    return render(request, 'view_history_salary.html', {'histories': histories})
