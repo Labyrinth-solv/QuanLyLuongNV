@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from django.db import connection
+from django.db import connection, transaction
+from datetime import date, datetime
 
 def index(request):
     if 'user_id' in request.session:
@@ -42,9 +43,7 @@ def login_view(request):
     
     return render(request, 'login.html')
 
-
 def logout_view(request):
-    # Tương đương với session.clear() hoặc xóa các khóa session thủ công
     if 'user_id' in request.session:
         del request.session['user_id']
     if 'user_role' in request.session:
@@ -52,8 +51,163 @@ def logout_view(request):
         
     return redirect('users:login')
 
+# -------------------------ADMIN-------------------------
+
+def admin_dashboard_view(request):
+    if 'user_id' not in request.session or request.session.get('user_role') != 'Admin':
+        return redirect('users:login') 
+    return render(request, 'base_admin.html')
+
+def list_staff_view(request):
+    if 'user_id' not in request.session or request.session.get('user_role') != 'Admin':
+        return redirect('users:login') 
+
+    staff_list = []
+    
+    try:
+        with connection.cursor() as cursor:
+            # JOIN 3 bảng: person, staffprofile, và salary để lấy thông tin nhân viên và lương
+            query = """
+                SELECT 
+                    p.id, p.username, p.gender, p.start_date, p.birth_date,
+                    s.rank, s.amount, s.multiplier
+                FROM person p
+                JOIN staffprofile sp ON p.id = sp.staff_id
+                JOIN salary s ON sp.salary_id = s.salary_id
+                WHERE 
+                    p.role = 'Staff'
+                ORDER BY 
+                    CAST(p.id AS UNSIGNED) ASC
+            """
+            cursor.execute(query)
+            
+            # Lấy tên cột để tạo dictionary
+            columns = [col[0] for col in cursor.description]
+            
+            for row in cursor.fetchall():
+                staff_list.append(dict(zip(columns, row)))
+
+    except Exception as e:
+        print(f"Database Error: {e}")
+        staff_list = []
+        
+    # Render template và truyền dữ liệu
+    context = {
+        'staff_list': staff_list,
+        'current_admin_id': request.session['user_id']
+    }
+    
+    return render(request, 'list_staff.html', context)
+
+def add_staff_view(request):
+    if 'user_id' not in request.session or request.session.get('user_role') != 'Admin':
+        return redirect('users:login')
+    
+    admin_id = request.session['user_id']
+
+    if request.method == 'POST':
+        username   = request.POST.get('username')
+        password   = request.POST.get('password')
+        gender     = request.POST.get('gender')
+        birth_date = request.POST.get('birth_date')
+        salary_id  = request.POST.get('salary_id')
+
+        start_date = date.today()
+        role       = 'Staff'
+        try:
+            bd = datetime.strptime(birth_date, '%Y-%m-%d').date() 
+        except ValueError:
+            error = "Định dạng ngày không hợp lệ"
+            return render(request, 'add_staff.html', {'error': error})
+        
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT MAX(CAST(id AS UNSIGNED)) FROM person")
+                max_id = cursor.fetchone()[0]
+                new_id = str(max_id + 1) if max_id is not None else '1'
+
+                with transaction.atomic():
+                    person_query = """
+                        INSERT INTO person (id, username, password, start_date, role, gender, birth_date)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """
+                    cursor.execute(person_query, [
+                        new_id,
+                        username,
+                        password,
+                        start_date,
+                        role,
+                        gender,
+                        birth_date
+                    ])
+
+                    # Thêm vào bảng staffprofile
+                    staff_profile_query = """
+                        INSERT INTO staffprofile (staff_id, salary_id)
+                        VALUES (%s, %s)
+                    """
+                    cursor.execute(staff_profile_query, [
+                        new_id,
+                        salary_id
+                    ])
+
+                    # Thêm vào bảng staffmanagement
+                    cursor.execute("SELECT MAX(manage_id) FROM staffmanagement")
+                    max_manage_id = cursor.fetchone()[0]
+                    new_manage_id = max_manage_id + 1 if max_manage_id is not None else 1
+
+                    staff_manage_query = """
+                        INSERT INTO staffmanagement (manage_id, admin_id, staff_id, action, timestamp)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """
+                    cursor.execute(staff_manage_query, [
+                        new_manage_id,
+                        admin_id,
+                        new_id,
+                        "Thêm nhân viên mới",
+                        datetime.now()
+                    ])
+                return redirect('users:list_staff')
+        except Exception as e:
+            error = f"Lỗi khi thêm nhân viên: {e}"
+            return render(request, 'add_staff.html', {'error': error})
+
+    return render(request, 'add_staff.html', {})
+
+def delete_staff_view(request, staff_id):
+    if 'user_id' not in request.session or request.session.get('user_role') != 'Admin':
+        return redirect('users:login')
+    
+    if str(staff_id) == str(request.session['user_id']):
+        print("Cảnh báo: Admin không thể tự xóa tài khoản của chính mình")
+        return redirect('users:admin_dashboard')
+
+    try:
+        # rollback nếu có lỗi
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                # Xóa các bản ghi phụ thuộc (Children Tables)
+                # Thứ tự xóa: Phụ thuộc nhất -> Gốc
+                
+                cursor.execute("DELETE FROM leavedetail WHERE staff_id = %s", [staff_id])
+                cursor.execute("DELETE FROM salarychangehistory WHERE staff_id = %s", [staff_id])
+                cursor.execute("DELETE FROM salarypayment WHERE staff_id = %s", [staff_id])
+                cursor.execute("DELETE FROM staffmanagement WHERE staff_id = %s", [staff_id])
+                
+                cursor.execute("DELETE FROM staffprofile WHERE staff_id = %s", [staff_id])
+                
+                cursor.execute("DELETE FROM person WHERE id = %s", [staff_id])
+                
+        return redirect('users:list_staff') 
+
+    except Exception as e:
+        print(f"Lỗi khi xóa nhân viên có ID {staff_id}: {e}")
+        return redirect('users:list_staff')    
+
+
+# -------------------------STAFF-------------------------
+
 def profile_view(request):
-    # Bảo vệ trang bằng cách kiểm tra session thủ công
     if 'user_id' not in request.session:
          return redirect('users:login') 
          
@@ -61,9 +215,4 @@ def profile_view(request):
     # person_id = request.session['user_id']
     # person_obj = Person.objects.get(id=person_id)
     
-    return render(request, 'profile.html')
-
-def admin_dashboard_view(request):
-    if 'user_id' not in request.session or request.session.get('user_role') != 'Admin':
-        return redirect('users:login') 
-    return render(request, 'base_admin.html')
+    return render(request, 'base_staff.html')
