@@ -51,7 +51,7 @@ DROP TABLE IF EXISTS `fundtransaction`;
 CREATE TABLE `fundtransaction` (
   `transaction_id` int NOT NULL,
   `fund_id` int DEFAULT NULL,
-  `admin_id` int DEFAULT NULL,
+  `admin_id` varchar(50) DEFAULT NULL,
   `old_amount` decimal(15,2) DEFAULT NULL,
   `new_amount` decimal(15,2) DEFAULT NULL,
   `transaction_date` datetime DEFAULT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE `fundtransaction` (
 
 LOCK TABLES `fundtransaction` WRITE;
 /*!40000 ALTER TABLE `fundtransaction` DISABLE KEYS */;
-INSERT INTO `fundtransaction` VALUES (1,1,1,2000000000.00,1970000000.00,'2025-11-30 15:00:00');
+INSERT INTO `fundtransaction` VALUES (1,1,'1',2000000000.00,1970000000.00,'2025-11-30 15:00:00');
 /*!40000 ALTER TABLE `fundtransaction` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -107,7 +107,7 @@ DROP TABLE IF EXISTS `leavedetail`;
 CREATE TABLE `leavedetail` (
   `detail_id` int NOT NULL,
   `leave_id` int DEFAULT NULL,
-  `staff_id` int DEFAULT NULL,
+  `staff_id` varchar(50) DEFAULT NULL,
   `reason` longtext,
   `status` enum('Pending','Approved','Rejected') DEFAULT NULL,
   PRIMARY KEY (`detail_id`),
@@ -124,7 +124,7 @@ CREATE TABLE `leavedetail` (
 
 LOCK TABLES `leavedetail` WRITE;
 /*!40000 ALTER TABLE `leavedetail` DISABLE KEYS */;
-INSERT INTO `leavedetail` VALUES (1,1,2,'Xin nghỉ đi chơi Noel','Pending');
+INSERT INTO `leavedetail` VALUES (1,1,'2','Xin nghỉ đi chơi Noel','Pending');
 /*!40000 ALTER TABLE `leavedetail` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -136,7 +136,7 @@ DROP TABLE IF EXISTS `person`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `person` (
-  `id` int NOT NULL,
+  `id` varchar(50) NOT NULL,
   `username` varchar(150) DEFAULT NULL,
   `password` varchar(150) DEFAULT NULL,
   `start_date` date DEFAULT NULL,
@@ -154,7 +154,7 @@ CREATE TABLE `person` (
 
 LOCK TABLES `person` WRITE;
 /*!40000 ALTER TABLE `person` DISABLE KEYS */;
-INSERT INTO `person` VALUES (1,'admin_boss','123456','2020-01-01','Admin','Male','1990-05-20'),(2,'staff_alice','123456','2024-06-01','Staff','Female','2000-01-15'),(3,'staff_bob','123456','2024-07-01','Staff','Male','1995-11-05');
+INSERT INTO `person` VALUES ('1','admin_boss','123456','2020-01-01','Admin','Male','1990-05-20'),('2','staff_alice','123456','2024-06-01','Staff','Female','2000-01-15'),('3','staff_bob','123456','2024-07-01','Staff','Male','1995-11-05');
 /*!40000 ALTER TABLE `person` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -193,8 +193,8 @@ DROP TABLE IF EXISTS `salarychangehistory`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `salarychangehistory` (
   `history_id` int NOT NULL,
-  `admin_id` int DEFAULT NULL,
-  `staff_id` int DEFAULT NULL,
+  `admin_id` varchar(50) DEFAULT NULL,
+  `staff_id` varchar(50) DEFAULT NULL,
   `salary_id` int DEFAULT NULL,
   `old_amount` decimal(15,2) DEFAULT NULL,
   `new_amount` decimal(15,2) DEFAULT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE `salarychangehistory` (
 
 LOCK TABLES `salarychangehistory` WRITE;
 /*!40000 ALTER TABLE `salarychangehistory` DISABLE KEYS */;
-INSERT INTO `salarychangehistory` VALUES (1,1,2,2,5000000.00,20000000.00,1,1.5,'2025-12-01 09:00:00');
+INSERT INTO `salarychangehistory` VALUES (1,'1','2',2,5000000.00,20000000.00,1,1.5,'2025-12-01 09:00:00');
 /*!40000 ALTER TABLE `salarychangehistory` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -230,8 +230,8 @@ DROP TABLE IF EXISTS `salarypayment`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `salarypayment` (
   `payment_id` int NOT NULL,
-  `staff_id` int DEFAULT NULL,
-  `admin_id` int DEFAULT NULL,
+  `staff_id` varchar(50) DEFAULT NULL,
+  `admin_id` varchar(50) DEFAULT NULL,
   `total_amount` decimal(15,2) DEFAULT NULL,
   `payment_date` datetime DEFAULT NULL,
   `salary_id` int DEFAULT NULL,
@@ -251,7 +251,7 @@ CREATE TABLE `salarypayment` (
 
 LOCK TABLES `salarypayment` WRITE;
 /*!40000 ALTER TABLE `salarypayment` DISABLE KEYS */;
-INSERT INTO `salarypayment` VALUES (1,3,1,30000000.00,'2025-11-30 15:00:00',2);
+INSERT INTO `salarypayment` VALUES (1,'3','1',30000000.00,'2025-11-30 15:00:00',2);
 /*!40000 ALTER TABLE `salarypayment` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -264,8 +264,8 @@ DROP TABLE IF EXISTS `staffmanagement`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `staffmanagement` (
   `manage_id` int NOT NULL,
-  `admin_id` int DEFAULT NULL,
-  `staff_id` int DEFAULT NULL,
+  `admin_id` varchar(50) DEFAULT NULL,
+  `staff_id` varchar(50) DEFAULT NULL,
   `action` varchar(100) DEFAULT NULL,
   `timestamp` datetime DEFAULT NULL,
   PRIMARY KEY (`manage_id`),
@@ -282,7 +282,7 @@ CREATE TABLE `staffmanagement` (
 
 LOCK TABLES `staffmanagement` WRITE;
 /*!40000 ALTER TABLE `staffmanagement` DISABLE KEYS */;
-INSERT INTO `staffmanagement` VALUES (1,1,2,'thêm','2024-06-01 08:00:00'),(2,1,3,'thêm','2024-07-01 08:00:00');
+INSERT INTO `staffmanagement` VALUES (1,'1','2','thêm','2024-06-01 08:00:00'),(2,'1','3','thêm','2024-07-01 08:00:00');
 /*!40000 ALTER TABLE `staffmanagement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -294,7 +294,7 @@ DROP TABLE IF EXISTS `staffprofile`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `staffprofile` (
-  `staff_id` int NOT NULL,
+  `staff_id` varchar(50) NOT NULL,
   `salary_id` int DEFAULT NULL,
   PRIMARY KEY (`staff_id`),
   KEY `fk_staff_salary_idx` (`salary_id`),
@@ -309,7 +309,7 @@ CREATE TABLE `staffprofile` (
 
 LOCK TABLES `staffprofile` WRITE;
 /*!40000 ALTER TABLE `staffprofile` DISABLE KEYS */;
-INSERT INTO `staffprofile` VALUES (2,1),(3,2);
+INSERT INTO `staffprofile` VALUES ('2',1),('3',2);
 /*!40000 ALTER TABLE `staffprofile` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -321,5 +321,3 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2025-11-19 18:33:54
