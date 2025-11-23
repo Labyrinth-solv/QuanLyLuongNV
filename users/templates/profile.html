@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông tin Cá nhân</title>
+</head>
+<body>
+    <h2>Chào mừng Staff ({{ request.user.username }})!</h2>
+    <p>Đây là trang thông tin cá nhân của bạn.</p>
+    <p><a href="{% url 'users:logout' %}">Đăng xuất</a></p>
+</body>
+</html>
