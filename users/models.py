@@ -1,7 +1,7 @@
 from django.db import models
 
 class Person(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=50, null=False)
     username = models.CharField(unique=True, max_length=150, blank=True, null=True)
     password = models.CharField(max_length=150, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)

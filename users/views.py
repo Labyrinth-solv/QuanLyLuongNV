@@ -18,7 +18,7 @@ def login_view(request):
         raw_password = request.POST.get('password') 
         
         with connection.cursor() as cursor:
-            # Get raw password
+            # raw pw
             query = "SELECT id, password, role FROM person WHERE username = %s"
             cursor.execute(query, [username])
             row = cursor.fetchone()
@@ -27,11 +27,11 @@ def login_view(request):
             person_id, password_from_db, role = row
             
             if raw_password == password_from_db:
-                # THIẾT LẬP SESSION THỦ CÔNG
+                # session
                 request.session['user_id'] = person_id
                 request.session['user_role'] = role
                 
-                # Redirect
+                # redirect
                 if role == 'Admin':
                     return redirect('users:admin_dashboard')
                 else:
