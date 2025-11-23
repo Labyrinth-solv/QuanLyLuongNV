@@ -138,8 +138,11 @@ def view_history_salary(request):
     return render(request, 'view_history_salary.html', {'histories': histories})
 
 def salary_payment(request):
+    status = request.GET.get("status")
+
     cursor=conn.cursor(DictCursor)
     if request.method=='POST':
+        status = request.GET.get('status', '')
         staff_id=request.POST.get('staff_id')
         month=request.POST.get('month')
         admin_id='2'
@@ -158,14 +161,18 @@ def salary_payment(request):
             ) VALUES (%s, %s, %s, %s, %s, %s)
         ''', (staff_id, total_amount, admin_id, salary_id, payment_datetime, new_payment_id))
         conn.commit()
-        return redirect(f"{reverse('payroll:salary_payment')}?month={month}")
+        redirect_url = f"{reverse('payroll:salary_payment')}?month={month}"
+        if status:
+            redirect_url += f"&status={status}"
+        return redirect(redirect_url)
+
     months = range(1, 13)
     select_month=request.GET.get('month')
     admin_id='2'
-    cursor.execute('''
+    query='''
         SELECT 
-    s1.id, s1.username, s2.salary_id, s2.rank, s2.amount, s2.multiplier, 
-    s2.amount * s2.multiplier AS total_salary,
+    s1.id, s1.username, s2.salary_id, s2.rank, s2.amount, s2.multiplier,
+    COALESCE(sp.total_amount, s2.amount * s2.multiplier) AS total_salary,
     sp.payment_date,
     CASE WHEN sp.payment_date IS NOT NULL THEN 1 ELSE 0 END AS is_paid
     FROM staffprofile s
@@ -174,10 +181,19 @@ def salary_payment(request):
     LEFT JOIN salarypayment sp
         ON sp.staff_id = s.staff_id
        AND DATE_FORMAT(sp.payment_date, '%%Y-%%m') = %s
-        ''', (select_month,))
+    '''
+    params = [select_month]
+    # Lọc theo trạng thái
+    if status == "paid":
+        query += " WHERE sp.payment_date IS NOT NULL"
+    elif status == "unpaid":
+        query += " WHERE sp.payment_date IS NULL"
+
+    cursor.execute(query, params)
     salaries=cursor.fetchall()
     if not select_month: return render(request, 'salary_payment.html', {'months':months})
     return render(request, 'salary_payment.html', {'salaries':salaries,
                                                    'months':months,
                                                    'selected_month':select_month,
-                                                   'admin_id':admin_id})
+                                                   'admin_id':admin_id,
+                                                   "selected_status": status})
