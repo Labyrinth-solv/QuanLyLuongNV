@@ -74,6 +74,7 @@
                             <p><strong>Nhân viên:</strong> {{ s.username }}</p>
                             <p><strong>Chức vụ:</strong> {{ s.rank }}</p>
                             <p><strong>Hệ số lương:</strong> {{ s.multiplier }}</p>
+                            <p><strong>Tiền phạt:</strong> {{ s.total_salary|floatformat:1 }}</p>
                             <p><strong>Thành tiền:</strong> {{ s.total_salary|floatformat:1 }}</p>
 
                             {% if s.is_paid %}

@@ -128,7 +128,7 @@ def salary_payment(request):
         status = request.GET.get('status', '')
         staff_id=request.POST.get('staff_id')
         month=request.POST.get('month')
-        admin_id='2'
+        admin_id=request.session.get('user_id')
         total_amount=request.POST.get('total_amount')
         salary_id = request.POST.get('salary_id')
         payment_datetime = datetime.datetime.strptime(month + "-15 0:0:00", "%Y-%m-%d %H:%M:%S")
@@ -151,7 +151,7 @@ def salary_payment(request):
 
     months = range(1, 13)
     select_month=request.GET.get('month')
-    admin_id='2'
+    admin_id=request.session.get('user_id')
     query='''
         SELECT 
     s1.id, s1.username, s2.salary_id, s2.rank, s2.amount, s2.multiplier,
