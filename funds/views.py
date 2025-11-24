@@ -19,11 +19,16 @@ def index(request):
     else:
         funds = res
 
+    count = len(funds)
+    sum_amount = sum(fund['fund_amount'] for fund in funds)
+
     return render(request, 'funds/index.html', {
         'funds': funds,
         'search': search,
         'sort': sort,
         'order': order,
+        'count': count,
+        'sum_amount': sum_amount
     })
 
 
@@ -53,7 +58,7 @@ def change_funds(request,id):
     fund = DAO.get_fund_by_id(id)
     if request.method == 'POST':
         fund_id = id
-        admin_id = request.session.get('id') #Trong session luu id admin dang dang nhap
+        admin_id = request.session.get('user_id') #Trong session luu id admin dang dang nhap
         amount = request.POST.get('amount')
         transaction_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         transaction_type = request.POST.get('transaction_type')
