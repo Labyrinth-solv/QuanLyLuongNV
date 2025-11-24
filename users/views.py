@@ -207,12 +207,46 @@ def delete_staff_view(request, staff_id):
 
 # -------------------------STAFF-------------------------
 
+def staff_dashboard(request):
+    if 'user_id' not in request.session:
+         return redirect('users:login') 
+         
+    # staff_id = request.session['user_id']
+
+    return render(request, 'base_staff.html')
+
 def profile_view(request):
     if 'user_id' not in request.session:
          return redirect('users:login') 
          
-    # Ở đây, bạn có thể tải thông tin Person từ DB bằng ID trong session:
-    # person_id = request.session['user_id']
-    # person_obj = Person.objects.get(id=person_id)
+    staff_id = request.session['user_id']
+    profile_data = None
+
+    try:
+        with connection.cursor() as cursor:
+            # JOIN 3 bảng person, salary, staffprofile để lấy thông tin
+            query = """
+                SELECT 
+                    p.id, p.username, p.role, p.gender, p.start_date, p.birth_date,
+                    s.rank, s.amount, s.multiplier
+                FROM person p
+                JOIN staffprofile sp ON p.id = sp.staff_id
+                JOIN salary s ON sp.salary_id = s.salary_id
+                WHERE 
+                    p.id = %s
+            """
+            cursor.execute(query, [staff_id])
+            row = cursor.fetchone()
+
+            if row:
+                columns = [col[0] for col in cursor.description]
+                profile_data = dict(zip(columns, row))
+    except Exception as e:
+        print(f"Database lỗi: {e}")
     
-    return render(request, 'base_staff.html')
+    context = {
+        'profile': profile_data,
+        'error': 'Không tìm thấy hồ sơ' if profile_data is None else None
+    }
+
+    return render(request, 'profile.html', context)
