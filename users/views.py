@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.db import connection, transaction
+from django.utils import timezone
 from datetime import date, datetime
 
 def index(request):
@@ -165,7 +166,7 @@ def add_staff_view(request):
                         admin_id,
                         new_id,
                         "Thêm nhân viên mới",
-                        datetime.now()
+                        timezone.now()
                     ])
                 return redirect('users:list_staff')
         except Exception as e:
@@ -285,7 +286,7 @@ def admin_edit_staff_view(request, staff_id):
                             admin_id, staff_id, new_salary_id,
                             old_amount, new_amount,
                             old_multiplier, new_multiplier,
-                            datetime.now()
+                            timezone.now()
                         ])
                         
             return redirect('users:list_staff') 
