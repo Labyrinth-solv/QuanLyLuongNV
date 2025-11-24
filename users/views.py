@@ -457,3 +457,108 @@ def edit_profile_view(request):
         profile_data = None
 
     return render(request, 'edit_profile.html', {'profile': profile_data})
+
+def salary_history_view(request):
+    if 'user_id' not in request.session:
+        return redirect('users:login')
+    
+    staff_id = request.session['user_id']
+    payment_history = []
+
+    try:
+        with connection.cursor() as cursor:
+            # Lấy chi tiết các lần thanh toán, sắp xếp từ mới nhất
+            query = """
+                SELECT 
+                    sp.payment_id, sp.payment_date, sp.total_amount
+                FROM salarypayment sp
+                WHERE sp.staff_id = %s
+                ORDER BY sp.payment_date DESC
+            """
+            cursor.execute(query, [staff_id])
+            
+            columns = [col[0] for col in cursor.description]
+            payment_history = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+    except Exception as e:
+        print(f"Lỗi truy vấn lịch sử lương: {e}")
+        
+    context = {
+        'payment_history': payment_history
+    }
+    return render(request, 'salary_history.html', context)
+
+def leave_history_view(request):
+    if 'user_id' not in request.session:
+        return redirect('users:login')
+    
+    staff_id = request.session['user_id']
+    leave_requests = []
+
+    try:
+        with connection.cursor() as cursor:
+            # JOIN leavedetail (ld) và leave (l)
+            query = """
+                SELECT 
+                    ld.detail_id,       
+                    l.leave_date,       
+                    ld.reason,          
+                    ld.status           
+                FROM leavedetail ld
+                JOIN `leave` l ON ld.leave_id = l.leave_id -- `` do leave là từ khóa 
+                WHERE ld.staff_id = %s
+                ORDER BY l.leave_date DESC
+            """
+            cursor.execute(query, [staff_id])
+            
+            columns = [col[0] for col in cursor.description]
+            leave_requests = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+    except Exception as e:
+        print(f"Lỗi truy vấn lịch sử nghỉ phép: {e}")
+        
+    context = {
+        'leave_requests': leave_requests
+    }
+    return render(request, 'leave_history.html', context)
+
+def change_password_view(request):
+    if 'user_id' not in request.session:
+        return redirect('users:login')
+
+    person_id = request.session['user_id']
+    error = None
+    message = None
+
+    if request.method == 'POST':
+        old_password = request.POST.get('old_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password != confirm_password:
+            error = 'Mật khẩu mới và xác nhận mật khẩu không khớp.'
+        # elif len(new_password) < 6:
+        #     error = 'Mật khẩu mới phải có ít nhất 6 ký tự.'
+        else:
+            try:
+                with connection.cursor() as cursor:
+                    query_check = "SELECT password FROM person WHERE id = %s"
+                    cursor.execute(query_check, [person_id])
+                    row = cursor.fetchone()
+                    
+                    if row and row[0] == old_password:
+                        update_query = "UPDATE person SET password = %s WHERE id = %s"
+                        cursor.execute(update_query, [new_password, person_id])
+                        message = 'Đổi mật khẩu thành công!'
+                    else:
+                        error = 'Mật khẩu cũ không chính xác.'
+            except Exception as e:
+                error = f"Lỗi khi cập nhật mật khẩu: {e}"
+                print(f"Database Error: {e}")
+
+    context = {
+        'error': error,
+        'message': message
+    }
+    return render(request, 'change_password.html', context)
+
