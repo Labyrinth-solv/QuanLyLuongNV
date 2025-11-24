@@ -58,7 +58,6 @@ CREATE TABLE `fundtransaction` (
   PRIMARY KEY (`transaction_id`),
   KEY `fk_trans_fund_idx` (`fund_id`),
   KEY `fk_trans_admin_idx` (`admin_id`),
-  CONSTRAINT `fk_trans_admin` FOREIGN KEY (`admin_id`) REFERENCES `person` (`id`),
   CONSTRAINT `fk_trans_fund` FOREIGN KEY (`fund_id`) REFERENCES `fund` (`fund_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -181,6 +180,7 @@ CREATE TABLE `salary` (
 LOCK TABLES `salary` WRITE;
 /*!40000 ALTER TABLE `salary` DISABLE KEYS */;
 INSERT INTO `salary` VALUES (1,'Intern',5000000.00,1),(2,'Senior Dev',20000000.00,1.5);
+INSERT INTO `salary` VALUES ('1','Senior3',4000.00,1.6),('2','Senior2',10000.00,1.5),('L001','Junior 3',2000.00,1),('L002','Junior 2',2000.00,1);
 /*!40000 ALTER TABLE `salary` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -192,10 +192,9 @@ DROP TABLE IF EXISTS `salarychangehistory`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `salarychangehistory` (
-  `history_id` int NOT NULL,
-  `admin_id` varchar(50) DEFAULT NULL,
-  `staff_id` varchar(50) DEFAULT NULL,
-  `salary_id` int DEFAULT NULL,
+  `history_id` int NOT NULL AUTO_INCREMENT,
+  `admin_id` varchar(36) DEFAULT NULL,
+  `salary_id` varchar(20) DEFAULT NULL,
   `old_amount` decimal(15,2) DEFAULT NULL,
   `new_amount` decimal(15,2) DEFAULT NULL,
   `old_multiplier` float DEFAULT NULL,
@@ -218,6 +217,7 @@ CREATE TABLE `salarychangehistory` (
 LOCK TABLES `salarychangehistory` WRITE;
 /*!40000 ALTER TABLE `salarychangehistory` DISABLE KEYS */;
 INSERT INTO `salarychangehistory` VALUES (1,'1','2',2,5000000.00,20000000.00,1,1.5,'2025-12-01 09:00:00');
+INSERT INTO `salarychangehistory` VALUES (2,NULL,'2',20000000.00,10000.00,1.5,1.5,'Senior Dev','Senior 2','2025-11-20 10:42:12'),(5,NULL,'2',10000.00,10000.00,1.5,1.5,'Senior2','Senior2','2025-11-20 11:40:14'),(6,NULL,'1',3000.00,4000.00,1.6,1.6,'Senior 3','Senior 3','2025-11-23 21:10:34'),(7,NULL,'1',4000.00,4000.00,1.6,1.6,'Senior 3','Senior3','2025-11-23 21:11:15');
 /*!40000 ALTER TABLE `salarychangehistory` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -252,6 +252,7 @@ CREATE TABLE `salarypayment` (
 LOCK TABLES `salarypayment` WRITE;
 /*!40000 ALTER TABLE `salarypayment` DISABLE KEYS */;
 INSERT INTO `salarypayment` VALUES (1,'3','1',30000000.00,'2025-11-30 15:00:00',2);
+INSERT INTO `salarypayment` VALUES (1,'2','2',4800.00,'2025-11-15 00:00:00','1'),(2,'3','2',15000.00,'2025-11-15 00:00:00','2'),(3,'3','2',15000.00,'2025-10-15 00:00:00','2'),(4,'2','2',4800.00,'2025-03-15 00:00:00','1');
 /*!40000 ALTER TABLE `salarypayment` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -270,9 +271,7 @@ CREATE TABLE `staffmanagement` (
   `timestamp` datetime DEFAULT NULL,
   PRIMARY KEY (`manage_id`),
   KEY `fk_manage_admin_idx` (`admin_id`),
-  KEY `fk_manage_staff_idx` (`staff_id`),
-  CONSTRAINT `fk_manage_admin` FOREIGN KEY (`admin_id`) REFERENCES `person` (`id`),
-  CONSTRAINT `fk_manage_staff` FOREIGN KEY (`staff_id`) REFERENCES `staffprofile` (`staff_id`)
+  KEY `fk_manage_staff_idx` (`staff_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -294,8 +293,8 @@ DROP TABLE IF EXISTS `staffprofile`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `staffprofile` (
-  `staff_id` varchar(50) NOT NULL,
-  `salary_id` int DEFAULT NULL,
+  `staff_id` varchar(36) NOT NULL,
+  `salary_id` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`staff_id`),
   KEY `fk_staff_salary_idx` (`salary_id`),
   CONSTRAINT `fk_staff_id` FOREIGN KEY (`staff_id`) REFERENCES `person` (`id`),
@@ -310,6 +309,7 @@ CREATE TABLE `staffprofile` (
 LOCK TABLES `staffprofile` WRITE;
 /*!40000 ALTER TABLE `staffprofile` DISABLE KEYS */;
 INSERT INTO `staffprofile` VALUES ('2',1),('3',2);
+INSERT INTO `staffprofile` VALUES ('2','1'),('3','2');
 /*!40000 ALTER TABLE `staffprofile` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

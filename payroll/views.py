@@ -1,6 +1,9 @@
+import datetime
+
 from django.shortcuts import render, redirect
 import pymysql.cursors
 from django.db import connection
+from django.urls import reverse
 from pymysql.cursors import DictCursor
 from django.conf import settings
 
@@ -133,3 +136,48 @@ def view_history_salary(request):
     cursor.close()
 
     return render(request, 'view_history_salary.html', {'histories': histories})
+
+def salary_payment(request):
+    cursor=conn.cursor(DictCursor)
+    if request.method=='POST':
+        staff_id=request.POST.get('staff_id')
+        month=request.POST.get('month')
+        admin_id='2'
+        total_amount=request.POST.get('total_amount')
+        salary_id = request.POST.get('salary_id')
+        payment_datetime = datetime.datetime.strptime(month + "-15 0:0:00", "%Y-%m-%d %H:%M:%S")
+
+        cursor.execute("SELECT MAX(payment_id) AS max_id FROM salarypayment")
+        result = cursor.fetchone()
+        max_id = result['max_id'] if result['max_id'] is not None else 0
+        new_payment_id = max_id + 1
+
+        cursor.execute('''
+            INSERT INTO salarypayment(
+                staff_id, total_amount, admin_id, salary_id, payment_date, payment_id
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (staff_id, total_amount, admin_id, salary_id, payment_datetime, new_payment_id))
+        conn.commit()
+        return redirect(f"{reverse('payroll:salary_payment')}?month={month}")
+    months = range(1, 13)
+    select_month=request.GET.get('month')
+    admin_id='2'
+    cursor.execute('''
+        SELECT 
+    s1.id, s1.username, s2.salary_id, s2.rank, s2.amount, s2.multiplier, 
+    s2.amount * s2.multiplier AS total_salary,
+    sp.payment_date,
+    CASE WHEN sp.payment_date IS NOT NULL THEN 1 ELSE 0 END AS is_paid
+    FROM staffprofile s
+    JOIN person s1 ON s.staff_id = s1.id
+    JOIN salary s2 ON s.salary_id = s2.salary_id
+    LEFT JOIN salarypayment sp
+        ON sp.staff_id = s.staff_id
+       AND DATE_FORMAT(sp.payment_date, '%%Y-%%m') = %s
+        ''', (select_month,))
+    salaries=cursor.fetchall()
+    if not select_month: return render(request, 'salary_payment.html', {'months':months})
+    return render(request, 'salary_payment.html', {'salaries':salaries,
+                                                   'months':months,
+                                                   'selected_month':select_month,
+                                                   'admin_id':admin_id})
