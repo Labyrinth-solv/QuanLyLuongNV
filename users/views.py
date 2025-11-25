@@ -1,8 +1,24 @@
+import pymysql
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.db import connection, transaction
 from django.utils import timezone
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
+
+from pymysql.cursors import DictCursor
+
+conn_settings = settings.DATABASES['default']
+conn = pymysql.connect(
+    host=conn_settings['HOST'],
+    user=conn_settings['USER'],
+    password=conn_settings['PASSWORD'],
+    database=conn_settings['NAME'],
+    port=int(conn_settings.get('PORT', 3306)),
+    charset='utf8mb4',
+    cursorclass=pymysql.cursors.DictCursor
+)
+
 
 def index(request):
     if 'user_id' in request.session:

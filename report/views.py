@@ -87,8 +87,10 @@ def salary_by_position(request):
 
 def salary_payment_status(request):
     month = request.GET.get("month")
+    payment_filter=request.GET.get('payment_filter')
+    staff_name=request.GET.get('staff_name')
     cursor=conn.cursor()
-    cursor.execute('''
+    query='''
         select s.staff_id, s1.username, l.rank, MAX(sp.total_amount) as total_amount, 
         (l.amount*l.multiplier) as amount,
         COUNT(CASE 
@@ -108,11 +110,26 @@ def salary_payment_status(request):
         LEFT JOIN salarypayment sp 
                ON sp.staff_id = s.staff_id 
                AND DATE_FORMAT(sp.payment_date, '%%Y-%%m') = %s
-        GROUP BY s.staff_id, s1.username, l.rank
-        ORDER BY s.staff_id;
-    ''', (month, month, month))
+        WHERE 1=1
+    '''
+    params = [month, month, month]
+
+    # Lọc theo trạng thái thanh toán nếu có
+    if payment_filter == 'paid':
+        query += ' AND sp.staff_id IS NOT NULL'
+    elif payment_filter == 'unpaid':
+        query += ' AND sp.staff_id IS NULL'
+
+    # Lọc theo tên nhân viên nếu có
+    if staff_name:
+        query += ' AND s1.username LIKE %s'
+        params.append(f'%{staff_name}%')
+
+    query += ' GROUP BY s.staff_id, s1.username, l.rank ORDER BY s.staff_id'
+    cursor.execute(query, params)
     staffs=cursor.fetchall()
     return render(request, 'report/salary_payment_status.html', {
         'staffs':staffs,
-        'selected_month':month
+        'selected_month':month,
+        'payment_filter':payment_filter
     })
