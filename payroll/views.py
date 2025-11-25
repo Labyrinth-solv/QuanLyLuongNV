@@ -141,14 +141,14 @@ def salary_payment(request):
             messages.error(request, f"Quỹ với mã {fund_id} không tồn tại.")
             return redirect(f"{reverse('payroll:salary_payment')}?month={month}&status={status}")
 
-        if float(fund['fund_amount']) < total_amount:
+        if float(fund['fund_amount']) < float(total_amount):
             messages.error(request, "Quỹ không đủ tiền để thực hiện thanh toán.")
             return redirect(f"{reverse('payroll:salary_payment')}?month={month}&status={status}")
 
         try:
             fund_DAO.change_fund({
                 'fund_id': fund_id,
-                'amount': total_amount,
+                'amount': float(total_amount),
                 'admin_id': admin_id,
                 'transaction_type': 'rut',  
                 'transaction_date': datetime.datetime.now(),
