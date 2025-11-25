@@ -21,7 +21,7 @@
                 <tbody>
                     {% for d in details %}
                     <tr>
-                        <td>{{ d.staff_name }}</td>
+                            <td>{{ d.staff_name }}</td>
                         <td>{{ d.leave_date }}</td>
                         <td>{{ d.reason }}</td>
                         <td>
@@ -52,36 +52,53 @@
         </div>
     </div>
 
+    <form method="get">
+    <label for="date">Chọn tháng:</label>
+    <input type="date" id="date" name="select_day" value="{{ request.GET.select_day|default:today }}">
+    <button type="submit">lọc</button>
+    </form>
+      <h3>Bảng chấm công nhân viên</h3>
 
-    <h3 class="mb-4">Bảng tính lương nhân viên</h3>
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Nhân viên</th>
-                        <th>Đi làm</th>
-                        <th>Nghỉ phép</th>
-                        <th>Vắng</th>
-                        <th>Lương</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for s in results %}
-                    <tr>
-                        <td>{{ s.name }}</td>
-                        <td>{{ s.present }}</td>
-                        <td>{{ s.leave }}</td>
-                        <td>{{ s.absent }}</td>
-                        <td>{{ s.salary_formatted }} VND</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">Không có dữ liệu.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <table border="1" cellspacing="0" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nhân viên</th>
+                    <th>Chấm công</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in staffs %}
+                <tr>
+                    <td>{{ s.id }}</td>
+                    <td>{{ s.username }}</td>
+                    <td>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="staff_id" value="{{ s.id }}">
+                        <input type="hidden" name="select_day" value="{{ select_day }}">
+                        <button type="submit" name="trangthai" value="chamcong">Chấm công</button>
+                        <button type="submit" name="trangthai" value="vang">Vắng</button>
+                    </form>
+                    </td>
+                    <td>
+                    {% if s.action == 'chamcong' %}
+                        Chấm công
+                    {% elif s.action == 'vang' %}
+                        Vắng
+                    {% else %}
+                        Chưa chấm
+                    {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;">Không có dữ liệu.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         </div>
     </div>
 

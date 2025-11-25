@@ -1,9 +1,10 @@
-from csv import DictReader
 
 from django.shortcuts import render, redirect
 import pymysql.cursors
 from django.conf import settings
 import datetime
+from datetime import datetime
+from datetime import date
 
 from pymysql.cursors import DictCursor
 
@@ -22,11 +23,11 @@ conn = pymysql.connect(
 
 
 def admin_leave(request):
+    admin_id = request.session.get('user_id')
     with conn.cursor() as cursor:
-
-
         # --- XỬ LÝ POST DUYỆT / TỪ CHỐI ---
         if request.method == 'POST':
+            select_day= request.POST.get('select_day')
             detail_id = request.POST.get('detail_id')
             action = request.POST.get('status')  # approve / reject
 
@@ -44,7 +45,33 @@ def admin_leave(request):
                 WHERE detail_id=%s
             """, (status, detail_id))
             conn.commit()
+            if select_day:
+                trangthai=request.POST.get('trangthai')
+                staff_id=request.POST.get('staff_id')
+                timestamp = datetime.strptime(select_day, '%Y-%m-%d')
+                ts_str = timestamp.strftime("%Y-%m-%d")
+                # Kiểm tra xem đã có bản ghi cho staff_id trong tháng chưa
+                cursor.execute("""
+                    SELECT manage_id FROM staffmanagement
+                    WHERE staff_id=%s AND DATE_FORMAT(timestamp, '%%Y-%%m-%%d')=%s
+                """, (staff_id, ts_str))
+                exist = cursor.fetchone()
 
+                if exist:
+                    # Update
+                    cursor.execute("""
+                        UPDATE staffmanagement
+                        SET action=%s, timestamp=%s
+                        WHERE manage_id=%s
+                    """, (trangthai, ts_str, exist['manage_id']))
+                else:
+                    # Insert
+                    cursor.execute("""
+                        INSERT INTO staffmanagement ( admin_id, staff_id, action, timestamp)
+                        VALUES (%s, %s, %s, %s)
+                    """, (admin_id, staff_id, trangthai, ts_str))
+
+                conn.commit()
 
             return redirect('attendance:admin_leave')
 
@@ -62,53 +89,24 @@ def admin_leave(request):
 
 
         # --- LẤY NHÂN VIÊN ---
-        cursor.execute("SELECT id AS staff_id, username AS name FROM person")
-        staff_list = cursor.fetchall()
-
-
-        # --- ĐẾM NGÀY NGHỈ PHÉP ĐƯỢC DUYỆT ---
-        month = datetime.datetime.now().month
-        year = datetime.datetime.now().year
-
-
-        cursor.execute("""
-            SELECT ld.staff_id, COUNT(*) AS leave_count
-            FROM leavedetail ld
-            JOIN `leave` l ON ld.leave_id = l.leave_id
-            WHERE ld.status='Approved'
-              AND MONTH(l.leave_date)=%s AND YEAR(l.leave_date)=%s
-            GROUP BY ld.staff_id
-        """, (month, year))
-
-
-        leave_data = {row['staff_id']: row['leave_count'] for row in cursor.fetchall()}
-
-
-        # --- TÍNH LƯƠNG ---
-        STANDARD_WORK_DAYS = 20
-        DAILY_SALARY = 100000
-        results = []
-
-
-        for staff in staff_list:
-            leave_count = leave_data.get(staff['staff_id'], 0)
-            present_days = STANDARD_WORK_DAYS - leave_count
-            absent_days = 0
-            salary = present_days * DAILY_SALARY
-
-
-            results.append({
-                "name": staff["name"],
-                "present": present_days,
-                "leave": leave_count,
-                "absent": absent_days,
-                "salary_formatted": f"{salary:,}"
-            })
-
+        select_day=request.GET.get('select_day')
+        with conn.cursor(DictCursor) as cursor:
+            cursor.execute('''
+                select s2.id, s2.username, s3.action
+                from staffprofile s1
+                join person s2 on s1.staff_id=s2.id
+                left join staffmanagement s3
+                on s3.staff_id=s1.staff_id
+                    and date_format(s3.timestamp, '%%Y-%%m-%%d')=%s 
+            ''', (select_day,))
+            staffs=cursor.fetchall()
+    today = date.today().isoformat()
 
     return render(request, "attendance/admin_leave.html", {
         "details": details,
-        "results": results
+        'staffs':staffs,
+        'select_day':select_day,
+        'today': today
     })
 
 
@@ -161,10 +159,8 @@ def staff_attendance(request):
     })
 
 
-
-
 def attendance_redirect(request):
-    role = request.session.get("role")
+    role = request.session.get("user_role")
 
 
     if role == "admin":
