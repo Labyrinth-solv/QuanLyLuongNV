@@ -11,8 +11,8 @@
     <form method="get">
         <label for="month">Chọn tháng:</label>
         <input type="month" id="month" name="month" value="{{ selected_month|default:'' }}">
-
-                <label for="payment_filter">Trạng thái thanh toán:</label>
+        <br>
+        <label for="payment_filter">Trạng thái thanh toán:</label>
         <select id="payment_filter" name="payment_filter">
             <option value="" {% if payment_filter == "" %}selected{% endif %}>Tất cả</option>
             <option value="paid" {% if payment_filter == "paid" %}selected{% endif %}>Đã thanh toán</option>
@@ -24,6 +24,10 @@
 
         <button type="submit">Lọc</button>
     </form>
+
+        <p><strong>Tổng đã thanh toán:</strong> {{ total_paid }}</p>
+        <p><strong>Tổng chưa thanh toán:</strong> {{ total_unpaid }}</p>
+        <br>
 
     <table border="1" cellspacing="0" cellpadding="5">
     <thead>

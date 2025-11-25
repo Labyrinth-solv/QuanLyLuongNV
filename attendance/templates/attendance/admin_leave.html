@@ -1,3 +1,8 @@
+
+.custom-border th,
+.custom-border td {
+    border: 2px solid #000 !important;
+}
 {% extends "base_admin.html" %}
 
 
@@ -8,7 +13,7 @@
     <h3 class="mb-4">Duyệt yêu cầu nghỉ phép</h3>
     <div class="card shadow-sm mb-5">
         <div class="card-body">
-            <table class="table table-bordered table-striped">
+            <table class="table custom-border table-striped">
                 <thead class="table-primary">
                     <tr>
                         <th>Nhân viên</th>
@@ -37,6 +42,8 @@
                             <form method="post" class="d-flex gap-2">
                                 {% csrf_token %}
                                 <input type="hidden" name="detail_id" value="{{ d.detail_id }}">
+                                <input type="hidden" name="staff_id" value="{{ d.staff_id }}">
+                                <input type="hidden" name="action_date" value="{{ d.leave_date }}">
                                 <button type="submit" name="status" value="approve" class="btn btn-success btn-sm">Duyệt</button>
                                 <button type="submit" name="status" value="reject" class="btn btn-danger btn-sm">Từ chối</button>
                             </form>
@@ -74,7 +81,7 @@
                     <td>{{ s.id }}</td>
                     <td>{{ s.username }}</td>
                     <td>
-                    <form method="POST">
+                    <form method="POST" action="{% url 'attendance:chamcong' %}">
                         {% csrf_token %}
                         <input type="hidden" name="staff_id" value="{{ s.id }}">
                         <input type="hidden" name="select_day" value="{{ select_day }}">

@@ -128,8 +128,24 @@ def salary_payment_status(request):
     query += ' GROUP BY s.staff_id, s1.username, l.rank ORDER BY s.staff_id'
     cursor.execute(query, params)
     staffs=cursor.fetchall()
+    query = """
+    SELECT
+      SUM(CASE WHEN sp.staff_id IS NOT NULL THEN 1 ELSE 0 END) AS total_paid,
+      SUM(CASE WHEN sp.staff_id IS NULL THEN 1 ELSE 0 END) AS total_unpaid
+    FROM staffprofile s
+    LEFT JOIN salarypayment sp
+      ON sp.staff_id = s.staff_id
+      AND DATE_FORMAT(sp.payment_date, '%%Y-%%m') = %s
+    """
+    cursor.execute(query, (month,))
+    row = cursor.fetchone()
+    total_paid = row['total_paid'] or 0
+    total_unpaid = row['total_unpaid'] or 0
+
     return render(request, 'report/salary_payment_status.html', {
         'staffs':staffs,
         'selected_month':month,
-        'payment_filter':payment_filter
+        'payment_filter':payment_filter,
+        'total_paid':total_paid,
+        'total_unpaid':total_unpaid
     })

@@ -30,7 +30,8 @@ def admin_leave(request):
             select_day= request.POST.get('select_day')
             detail_id = request.POST.get('detail_id')
             action = request.POST.get('status')  # approve / reject
-
+            action_date=request.POST.get('action_date')
+            staff_id=request.POST.get('staff_id')
 
             status_map = {
                 "approve": "Approved",
@@ -45,33 +46,18 @@ def admin_leave(request):
                 WHERE detail_id=%s
             """, (status, detail_id))
             conn.commit()
-            if select_day:
-                trangthai=request.POST.get('trangthai')
-                staff_id=request.POST.get('staff_id')
-                timestamp = datetime.strptime(select_day, '%Y-%m-%d')
-                ts_str = timestamp.strftime("%Y-%m-%d")
-                # Kiểm tra xem đã có bản ghi cho staff_id trong tháng chưa
-                cursor.execute("""
-                    SELECT manage_id FROM staffmanagement
-                    WHERE staff_id=%s AND DATE_FORMAT(timestamp, '%%Y-%%m-%%d')=%s
-                """, (staff_id, ts_str))
-                exist = cursor.fetchone()
-
-                if exist:
-                    # Update
-                    cursor.execute("""
-                        UPDATE staffmanagement
-                        SET action=%s, timestamp=%s
-                        WHERE manage_id=%s
-                    """, (trangthai, ts_str, exist['manage_id']))
-                else:
-                    # Insert
-                    cursor.execute("""
-                        INSERT INTO staffmanagement ( admin_id, staff_id, action, timestamp)
-                        VALUES (%s, %s, %s, %s)
-                    """, (admin_id, staff_id, trangthai, ts_str))
-
+            # 'Nov. 25, 2025' → datetime
+            action_date_obj = datetime.strptime(action_date, "%b. %d, %Y")
+            # Chỉ lấy phần date
+            action_date_str = action_date_obj.strftime("%Y-%m-%d")
+            if status=='Approved':
+                cursor.execute('''
+                    update staffmanagement
+                    set action='chamcong'
+                    where DATE(timestamp)=%s and staff_id=%s
+                ''', (action_date_str, staff_id))
                 conn.commit()
+
 
             return redirect('attendance:admin_leave')
 
@@ -79,8 +65,8 @@ def admin_leave(request):
         # --- LẤY DANH SÁCH NGHỈ PHÉP ---
         cursor.execute("""
             SELECT ld.detail_id, ld.reason, ld.status,
-                   p.username AS staff_name,
-                   ld.leavedetail_date
+                   p.username AS staff_name, ld.staff_id,
+                   ld.leavedetail_date as leave_date
             FROM leavedetail ld
             JOIN person p ON ld.staff_id = p.id
             ORDER BY ld.leavedetail_date DESC
@@ -108,6 +94,38 @@ def admin_leave(request):
         'select_day':select_day,
         'today': today
     })
+
+def chamcong(request):
+    admin_id = request.session.get('user_id')
+    if request.method == 'POST':
+        cursor=conn.cursor()
+        select_day = request.POST.get('select_day')
+        trangthai = request.POST.get('trangthai')
+        staff_id = request.POST.get('staff_id')
+        timestamp = datetime.strptime(select_day, '%Y-%m-%d')
+        ts_str = timestamp.strftime("%Y-%m-%d")
+        # Kiểm tra xem đã có bản ghi cho staff_id trong tháng chưa
+        cursor.execute("""
+            SELECT manage_id FROM staffmanagement
+            WHERE staff_id=%s AND DATE_FORMAT(timestamp, '%%Y-%%m-%%d')=%s
+        """, (staff_id, ts_str))
+        exist = cursor.fetchone()
+
+        if exist:
+            # Update
+            cursor.execute("""
+                UPDATE staffmanagement
+                SET action=%s, timestamp=%s
+                WHERE manage_id=%s
+            """, (trangthai, ts_str, exist['manage_id']))
+        else:
+            # Insert
+            cursor.execute("""
+                INSERT INTO staffmanagement ( admin_id, staff_id, action, timestamp)
+                VALUES (%s, %s, %s, %s)
+            """, (admin_id, staff_id, trangthai, ts_str))
+        conn.commit()
+        return redirect('attendance:admin_leave')
 
 
 def staff_attendance(request):
