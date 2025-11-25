@@ -22,50 +22,68 @@ def admin_reports(request):
     return render(request, 'report/admin_reports.html')
 
 def salary_by_position(request):
-    if 'user_id' not in request.session or request.session.get('user_role') != 'Admin':
-        return redirect('users:login')
-    
-    salary_stats = []
-    
-    try:
-        with conn.cursor() as cursor:
-            # Thống kê lương theo chức vụ (rank)
-            query = """
-                SELECT
-                    s.rank AS chuc_vu,
-                    COUNT(sp.staff_id) AS so_nhan_vien,
-                    (s.amount * s.multiplier * COUNT(sp.staff_id) * 1000) AS tong_luong,
-                    (s.amount * 1000) AS luong_co_ban,
-                    s.multiplier AS he_so
-                FROM salary s
-                LEFT JOIN staffprofile sp ON s.salary_id = sp.salary_id
-                GROUP BY s.salary_id, s.rank, s.amount, s.multiplier
-                ORDER BY s.amount DESC;
-            """
-            cursor.execute(query)
-            salary_stats = cursor.fetchall()
+    month = request.GET.get('month')
+    year = request.GET.get('year')
 
-            query = """
-                SELECT
-                    COUNT(sp.staff_id) AS tong_nhan_vien,
-                    SUM(s.amount * s.multiplier * 1000) AS tong_luong,
-                    AVG(s.amount * s.multiplier * 1000) AS trung_binh_luong,
-                    MIN(s.amount * s.multiplier * 1000) AS luong_nho_nhat,
-                    MAX(s.amount * s.multiplier * 1000) AS luong_lon_nhat
-                FROM salary s
-                JOIN staffprofile sp ON s.salary_id = sp.salary_id;
-            """
-            cursor.execute(query)
-            overall_stats = cursor.fetchone()
-    
-    except Exception as e:
-        print("Lỗi khi truy vấn dữ liệu:", e)
-    
-    context = {
-        'salary_stats': salary_stats,
-        'total_stats': overall_stats
-    }
-    return render(request, 'report/salary_by_position.html', context)
+    general_details = {}
+    rank_details = []
+    cursor = conn.cursor()
+
+    if month and year:
+        cursor.execute("""
+            SELECT 
+                SUM(total_amount)*1000 AS total_payment,
+                AVG(total_amount)*1000 AS AVG_payment,
+                MIN(total_amount)*1000 AS MIN_payment,
+                MAX(total_amount)*1000 AS MAX_payment
+            FROM salarypayment
+            WHERE MONTH(payment_date) = %s
+                AND YEAR(payment_date) = %s
+        """, [month, year])
+        row = cursor.fetchone()
+        total_payment = float(row["total_payment"]) if row["total_payment"] is not None else 0
+        AVG_payment = float(row["AVG_payment"]) if row["AVG_payment"] is not None else 0
+        MIN_payment = float(row["MIN_payment"]) if row["MIN_payment"] is not None else 0
+        MAX_payment = float(row["MAX_payment"]) if row["MAX_payment"] is not None else 0
+        general_details = {
+            "total_payment": total_payment,
+            "AVG_payment": AVG_payment,
+            "MIN_payment": MIN_payment,
+            "MAX_payment": MAX_payment,
+        }
+
+        cursor.execute("""
+            SELECT 
+                s.rank AS position,
+                COUNT(sp.staff_id) AS total_staff,
+                SUM(spay.total_amount)*1000 AS total_paid
+            FROM salarypayment spay
+            JOIN staffprofile sp ON spay.staff_id = sp.staff_id
+            JOIN salary s ON sp.salary_id = s.salary_id
+            WHERE MONTH(spay.payment_date) = %s
+                AND YEAR(spay.payment_date) = %s
+            GROUP BY s.rank
+            ORDER BY SUM(spay.total_amount) DESC;
+        """, [month, year])
+
+        rows = cursor.fetchall()
+
+        rank_details = [
+            {
+                "position": r["position"],
+                "total_staff": r["total_staff"],
+                "total_paid": float(r["total_paid"]) if r["total_paid"] is not None else 0
+            }
+            for r in rows
+        ]
+        cursor.close()
+    return render(request, "report/salary_by_position.html", {
+        "month": month,
+        "year": year,
+        "general_details": general_details,
+        "rank_details": rank_details,
+        "months": (1,2,3,4,5,6,7,8,9,10,11,12),
+    })
 
 def salary_payment_status(request):
     pass

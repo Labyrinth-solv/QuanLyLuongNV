@@ -184,15 +184,15 @@ def salary_payment(request):
     sp.payment_date,
     CASE WHEN sp.payment_date IS NOT NULL THEN 1 ELSE 0 END AS is_paid,
     (SELECT COUNT(*)*1000 
-        FROM leavedetail ld JOIN `leave` l ON ld.leave_id = l.leave_id
-        WHERE ld.staff_id = s.staff_id
+        FROM leavedetail l
+        WHERE l.staff_id = s.staff_id
             AND status = 'rejected'
-            AND DATE_FORMAT(l.leave_date, '%%Y-%%m') = %s) AS penalty_money,
+            AND DATE_FORMAT(l.leavedetail_date, '%%Y-%%m') = %s) AS penalty_money,
     (SELECT COUNT(*) 
-        FROM leavedetail ld JOIN `leave` l ON ld.leave_id = l.leave_id
-        WHERE ld.staff_id = s.staff_id
+        FROM leavedetail l
+        WHERE l.staff_id = s.staff_id
             AND status = 'rejected'
-            AND DATE_FORMAT(l.leave_date, '%%Y-%%m') = %s) AS penalty
+            AND DATE_FORMAT(l.leavedetail_date, '%%Y-%%m') = %s) AS penalty
     FROM staffprofile s
     JOIN person s1 ON s.staff_id = s1.id
     JOIN salary s2 ON s.salary_id = s2.salary_id
