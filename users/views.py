@@ -283,19 +283,19 @@ def admin_edit_staff_view(request, staff_id):
                         cursor.execute(staff_profile_query, [new_salary_id, staff_id])
 
                         # Ghi Log
-                        cursor.execute("SELECT MAX(history_id) FROM salarychangehistory")
-                        max_history_id = cursor.fetchone()[0]
-                        new_history_id = max_history_id + 1 if max_history_id is not None else 1
+                        cursor.execute("SELECT MAX(manage_id) FROM staffmanagement")
+                        max_manage_id = cursor.fetchone()[0]
+                        new_manage_id = max_manage_id + 1 if max_manage_id is not None else 1
 
-                        history_query = """
-                            INSERT INTO salarychangehistory (history_id, admin_id, staff_id, salary_id, old_amount, new_amount, old_multiplier, new_multiplier, change_date)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        staff_manage_query = """
+                            INSERT INTO staffmanagement (manage_id, admin_id, staff_id, action, timestamp)
+                            VALUES (%s, %s, %s, %s, %s)
                         """
-                        cursor.execute(history_query, [
-                            new_history_id, 
-                            admin_id, staff_id, new_salary_id,
-                            old_amount, new_amount,
-                            old_multiplier, new_multiplier,
+                        cursor.execute(staff_manage_query, [
+                            new_manage_id,
+                            admin_id,
+                            staff_id,
+                            f"Thay đổi bậc lương từ {old_salary_id} thành {new_salary_id}",
                             timezone.now().astimezone(ZoneInfo("Asia/Ho_Chi_Minh"))
                         ])
                         
@@ -335,7 +335,6 @@ def delete_staff_view(request, staff_id):
                 # Thứ tự xóa: Phụ thuộc nhất -> Gốc
                 
                 cursor.execute("DELETE FROM leavedetail WHERE staff_id = %s", [staff_id])
-                cursor.execute("DELETE FROM salarychangehistory WHERE staff_id = %s", [staff_id])
                 cursor.execute("DELETE FROM salarypayment WHERE staff_id = %s", [staff_id])
                 cursor.execute("DELETE FROM staffmanagement WHERE staff_id = %s", [staff_id])
                 
