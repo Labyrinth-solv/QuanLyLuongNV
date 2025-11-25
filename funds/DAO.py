@@ -7,7 +7,7 @@ def _dict_from_cursor(cursor):
     return [dict(zip(cols, row)) for row in rows]
 
 
-def list_funds(search, sort="fund_id", order="asc"):
+def list_funds(search, sort, order):
         try:
             cur = connection.cursor()
 
