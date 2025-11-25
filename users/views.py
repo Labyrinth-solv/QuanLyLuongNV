@@ -127,7 +127,7 @@ def add_staff_view(request):
     salary_ranks = []
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT salary_id, rank FROM salary ORDER BY CAST(salary_id AS UNSIGNED)")
+            cursor.execute("SELECT salary_id, `rank` FROM salary ORDER BY CAST(salary_id AS UNSIGNED)")
             salary_ranks = [dict(zip([col[0] for col in cursor.description], row)) for row in cursor.fetchall()]
     except Exception as e:
         print(f"Lỗi truy vấn bậc lương: {e}")
