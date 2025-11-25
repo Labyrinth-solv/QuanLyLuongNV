@@ -46,6 +46,7 @@
         <thead>
             <tr>
                 <th>STT</th>
+                <th>staff_id</th>
                 <th>Họ tên</th>
                 <th>Chức vụ</th>
                 <th>Lương cơ bản</th>
@@ -59,6 +60,7 @@
             {% for s in salaries %}
             <tr>
                 <td>{{ forloop.counter }}</td>
+                <td>{{ s.id }}</td>
                 <td>{{ s.username }}</td>
                 <td>{{ s.rank }}</td>
                 <td>{{ s.amount }}</td>
