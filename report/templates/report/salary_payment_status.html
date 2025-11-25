@@ -1,0 +1,61 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Bảng theo dõi tình trạng thanh toán của nhân viên{% endblock %}
+
+{% block content %}
+
+    {% if selected_month %}
+        <p>Tháng đang xem: {{ selected_month }}</p>
+    {% endif %}
+
+    <form method="get">
+        <label for="month">Chọn tháng:</label>
+        <input type="month" id="month" name="month" value="{{ selected_month|default:'' }}">
+        <button type="submit">Lọc</button>
+    </form>
+
+    <table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Mã ID</th>
+            <th>Username</th>
+            <th>Cấp bậc</th>
+            <th>Lương tạm tính</th>
+            <th>Số buổi vắng</th>
+            <th>Đã thanh toán</th>
+            <th>Chưa thanh toán</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <!-- Ví dụ dùng Django template -->
+        {% for s in staffs %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ s.staff_id }}</td>
+            <td>{{ s.username }}</td>
+            <td>{{ s.rank }}</td>
+                {% if s.total_amount %}
+            <td>{{ s.total_amount|floatformat:1 }}</td>
+                {% else %}
+            <td>{{ s.amount|floatformat:1 }}</td>
+            {% endif %}
+            <td>{{ s.absent }}</td>
+            <td>
+                {% if s.payment_status %}
+                    x
+                {% endif %}
+            </td>
+            <td>
+                {% if not s.payment_status %}
+                x
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}

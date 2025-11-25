@@ -86,4 +86,33 @@ def salary_by_position(request):
     })
 
 def salary_payment_status(request):
-    pass
+    month = request.GET.get("month")
+    cursor=conn.cursor()
+    cursor.execute('''
+        select s.staff_id, s1.username, l.rank, MAX(sp.total_amount) as total_amount, 
+        (l.amount*l.multiplier) as amount,
+        COUNT(CASE 
+            WHEN s3.action='vang' AND DATE_FORMAT(s3.timestamp, '%%Y-%%m') = %s
+            THEN 1 
+         END) AS absent,
+        CASE 
+            WHEN sp.staff_id IS NOT NULL THEN 1
+                ELSE 0
+            END AS payment_status
+        FROM staffprofile s
+        JOIN salary l ON l.salary_id = s.salary_id
+        JOIN person s1 ON s.staff_id = s1.id
+        LEFT JOIN staffmanagement s3 
+               ON s3.staff_id = s.staff_id 
+               AND DATE_FORMAT(s3.timestamp, '%%Y-%%m') = %s
+        LEFT JOIN salarypayment sp 
+               ON sp.staff_id = s.staff_id 
+               AND DATE_FORMAT(sp.payment_date, '%%Y-%%m') = %s
+        GROUP BY s.staff_id, s1.username, l.rank
+        ORDER BY s.staff_id;
+    ''', (month, month, month))
+    staffs=cursor.fetchall()
+    return render(request, 'report/salary_payment_status.html', {
+        'staffs':staffs,
+        'selected_month':month
+    })
