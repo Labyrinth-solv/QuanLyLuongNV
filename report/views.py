@@ -1,8 +1,11 @@
+import calendar
+import datetime
+
 import pymysql.cursors
 from django.shortcuts import render, redirect
 from django.conf import settings
 from pymysql.cursors import DictCursor
-
+from django.views.decorators.cache import never_cache
 # Kết nối database
 conn_settings = settings.DATABASES['default']
 conn = pymysql.connect(
@@ -12,7 +15,8 @@ conn = pymysql.connect(
     database=conn_settings['NAME'],
     port=int(conn_settings.get('PORT', 3306)),
     charset='utf8mb4',
-    cursorclass=DictCursor
+    cursorclass=DictCursor,
+    autocommit=True
 )
 
 def admin_reports(request):
@@ -149,3 +153,68 @@ def salary_payment_status(request):
         'total_paid':total_paid,
         'total_unpaid':total_unpaid
     })
+
+@never_cache
+def staff_observe(request):
+    staff_id=request.session.get('user_id')
+    selected_month=request.GET.get('month')
+    if not selected_month:
+        selected_month = datetime.date.today().strftime("%Y-%m")
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT DATE(timestamp) AS day, action
+        FROM staffmanagement
+        WHERE staff_id = %s
+          AND DATE_FORMAT(timestamp, '%%Y-%%m') = %s
+    ''', (staff_id, selected_month))
+
+    rows = cursor.fetchall()
+    attendance_map = {}
+    for row in rows:
+        day_str = row["day"].strftime("%d")
+        action_value = row["action"].lower().strip()  # chuẩn hóa string
+        # Chỉ quan tâm 'chamcong' và 'vang'
+        if action_value == "chamcong":
+            status = "chamcong"
+        elif action_value == "vang":
+            status = "vang"
+        else:
+            status = "chua"  # những giá trị khác đều coi là chưa chấm công
+        attendance_map[day_str] = status
+    year, month = map(int, selected_month.split('-'))
+    days_in_month = calendar.monthrange(year, month)[1]
+
+    attendance_data = []
+
+    for day in range(1, days_in_month + 1):
+        day_str = f"{day:02d}"
+
+        status = attendance_map.get(day_str)  # "chamcong", "vang", hoặc None
+
+        attendance_data.append({
+            "day": day,
+            "status": status
+        })
+    cursor.execute('''
+        select s2.username
+        from staffprofile s
+        join person s2 on s2.id=s.staff_id
+        where s.staff_id=%s
+    ''', (staff_id,))
+    staffs=cursor.fetchone()
+    cursor.close()
+    # Tổng số ngày đã chấm công
+    total_present = sum(1 for d in attendance_data if d["status"] == "chamcong")
+
+    # Tổng số ngày vắng
+    total_absent = sum(1 for d in attendance_data if d["status"] == "vang")
+    return render(request, 'report/staff_observe.html', {
+        'attendance_data':attendance_data,
+        'selected_month':selected_month,
+        'staffs':staffs,
+        "total_present": total_present,
+        "total_absent": total_absent,
+    })
+
+
+

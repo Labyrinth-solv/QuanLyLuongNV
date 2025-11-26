@@ -17,7 +17,8 @@ conn = pymysql.connect(
     database=conn_settings['NAME'],
     port=int(conn_settings.get('PORT', 3306)),
     charset='utf8mb4',
-    cursorclass=pymysql.cursors.DictCursor
+    cursorclass=pymysql.cursors.DictCursor,
+    autocommit=True
 )
 
 
@@ -125,6 +126,7 @@ def chamcong(request):
                 VALUES (%s, %s, %s, %s)
             """, (admin_id, staff_id, trangthai, ts_str))
         conn.commit()
+        cursor.close()
         return redirect('attendance:admin_leave')
 
 

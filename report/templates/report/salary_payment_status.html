@@ -1,9 +1,10 @@
 {% extends "base_admin.html" %}
 
-{% block title %}Bảng theo dõi tình trạng thanh toán của nhân viên{% endblock %}
+{% block title %}Bảng theo dõi tình trạng thanh toán nhân viên{% endblock %}
 
 {% block content %}
-
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/admin_report.css' %}">
     {% if selected_month %}
         <p>Tháng đang xem: {{ selected_month }}</p>
     {% endif %}
@@ -22,7 +23,7 @@
         <label for="staff_name">Tên nhân viên:</label>
         <input type="text" id="staff_name" name="staff_name" value="{{ staff_name|default:'' }}" placeholder="Nhập tên nhân viên">
 
-        <button type="submit">Lọc</button>
+        <button type="submit">Thống kê</button>
     </form>
 
         <p><strong>Tổng đã thanh toán:</strong> {{ total_paid }}</p>

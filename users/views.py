@@ -16,7 +16,8 @@ conn = pymysql.connect(
     database=conn_settings['NAME'],
     port=int(conn_settings.get('PORT', 3306)),
     charset='utf8mb4',
-    cursorclass=pymysql.cursors.DictCursor
+    cursorclass=pymysql.cursors.DictCursor,
+    autocommit=True
 )
 
 

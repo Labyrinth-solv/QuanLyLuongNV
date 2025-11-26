@@ -18,7 +18,8 @@ conn = pymysql.connect(
     database=conn_settings['NAME'],
     port=int(conn_settings.get('PORT', 3306)),
     charset='utf8mb4',
-    cursorclass=DictCursor
+    cursorclass=DictCursor,
+    autocommit=True
 )
 # Create your views here.
 def view_salary(request):
