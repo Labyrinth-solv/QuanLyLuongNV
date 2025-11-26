@@ -6,7 +6,7 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/admin_report.css' %}">
     {% if selected_month %}
-        <p>Tháng đang xem: {{ selected_month }}</p>
+        <p style="font-size: 1.4rem;">Tháng đang xem: {{ selected_month }}</p>
     {% endif %}
 
     <form method="get">
@@ -26,8 +26,8 @@
         <button type="submit">Thống kê</button>
     </form>
 
-        <p><strong>Tổng đã thanh toán:</strong> {{ total_paid }}</p>
-        <p><strong>Tổng chưa thanh toán:</strong> {{ total_unpaid }}</p>
+        <p style="font-size: 1.2rem;"><strong>Tổng đã thanh toán:</strong> {{ total_paid }}</p>
+        <p style="font-size: 1.2rem;"><strong>Tổng chưa thanh toán:</strong> {{ total_unpaid }}</p>
         <br>
 
     <table border="1" cellspacing="0" cellpadding="5">

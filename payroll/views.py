@@ -24,7 +24,8 @@ conn = pymysql.connect(
 # Create your views here.
 def view_salary(request):
     salary_data = None
-    salary_id = request.GET.get('salary_id')  # Lấy từ hidden input khi ấn
+    salary_id = request.GET.get('salary_id')
+    admin_id=request.session.get('user_id')# Lấy từ hidden input khi ấn
 
     # Nếu GET có salary_id → lấy dữ liệu để hiển thị trên form
     if salary_id:
@@ -59,14 +60,14 @@ def view_salary(request):
         cursor.execute(
             """
             INSERT INTO salarychangehistory(
-                salary_id, old_rank, new_rank,
-                old_amount, new_amount,
+                admin_id, salary_id, old_rank, new_rank,
+                old_amount, new_amount, 
                 old_multiplier, new_multiplier,
                 change_date
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
             """,
-            (salary_id,
+            (admin_id ,salary_id,
              old_rank, salary_rank,
              old_amount, amount,
              old_multiplier, multiplier)
