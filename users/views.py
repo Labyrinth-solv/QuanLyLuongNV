@@ -521,13 +521,11 @@ def leave_history_view(request):
             query = """
                 SELECT 
                     ld.detail_id,       
-                    l.leave_date,       
+                    ld.leavedetail_date,       
                     ld.reason,          
                     ld.status           
-                FROM leavedetail ld
-                JOIN `leave` l ON ld.leave_id = l.leave_id -- `` do leave là từ khóa 
+                FROM leavedetail ld 
                 WHERE ld.staff_id = %s
-                ORDER BY l.leave_date DESC
             """
             cursor.execute(query, [staff_id])
             
