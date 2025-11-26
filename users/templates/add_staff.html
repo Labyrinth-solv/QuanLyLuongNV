@@ -103,7 +103,8 @@
 
     <form method="POST">
         {% csrf_token %}
-        
+        <label for="staff_id">Mã nhân viên:</label>
+        <input type="text" id="staff_id" name="staff_id" required placeholder="VD: ST001">
         <label for="username">Tên đăng nhập:</label>
         <input type="text" id="username" name="username" required>
 
