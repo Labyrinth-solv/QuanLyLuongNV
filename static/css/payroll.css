@@ -1,0 +1,91 @@
+    /* ===================== */
+/*     PAGE LAYOUT       */
+/* ===================== */
+h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+a {
+    margin-right: 15px;
+    text-decoration: none;
+    font-weight: 500;
+    color: #0066cc;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ===================== */
+/*   EDIT SALARY FORM    */
+/* ===================== */
+form div {
+    margin-bottom: 12px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+input[type="text"],
+input[type="number"] {
+    padding: 8px;
+    width: 250px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+button {
+    padding: 8px 16px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0068d6;
+}
+
+/* ===================== */
+/*      TABLE STYLE      */
+/* ===================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+thead {
+    background-color: #f2f2f2;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+tr:hover {
+    background-color: #e9f3ff;
+    cursor: pointer;
+}
+
+.table-primary {
+    background-color: #cde5ff !important;
+}
+
+/* Radio button column */
+td input[type="radio"] {
+    transform: scale(1.2);
+}
