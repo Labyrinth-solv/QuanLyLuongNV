@@ -51,10 +51,10 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{ general_details.total_payment|floatformat:2 }} VND</td>
-                        <td>{{ general_details.AVG_payment|floatformat:2 }} VND</td>
-                        <td>{{ general_details.MIN_payment|floatformat:2 }} VND</td>
-                        <td>{{ general_details.MAX_payment|floatformat:2 }} VND</td>
+                        <td>{{ general_details.total_payment|floatformat:2 }} Nghìn VND</td>
+                        <td>{{ general_details.AVG_payment|floatformat:2 }} Nghìn VND</td>
+                        <td>{{ general_details.MIN_payment|floatformat:2 }} Nghìn VND</td>
+                        <td>{{ general_details.MAX_payment|floatformat:2 }} Nghìn VND</td>
                     </tr>
                 </tbody>
             </table>
@@ -76,7 +76,7 @@
                         <tr>
                             <td>{{ row.position }}</td>
                             <td>{{ row.total_staff }}</td>
-                            <td>{{ row.total_paid|floatformat:2 }} VND</td>
+                            <td>{{ row.total_paid|floatformat:2 }} Nghìn VND</td>
                         </tr>
                     {% endfor %}
                 </tbody>
