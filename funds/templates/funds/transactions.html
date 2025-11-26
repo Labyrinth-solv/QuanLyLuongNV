@@ -29,8 +29,8 @@
       <td>{{ t.transaction_id }}</td>
       <td>{{ t.fund_id }}</td>
       <td>{{ t.admin_id }}</td>
-      <td>{% if t.old_amount %}{{ t.old_amount|floatformat:2 }}{% else %}-{% endif %}</td>
-      <td>{% if t.new_amount %}{{ t.new_amount|floatformat:2 }}{% else %}-{% endif %}</td>
+      <td>{% if t.old_amount %}{{ t.old_amount|floatformat:2 }} Nghìn VND{% else %}-{% endif %}</td>
+      <td>{% if t.new_amount %}{{ t.new_amount|floatformat:2 }} Nghìn VND{% else %}-{% endif %}</td>
       <td>{{ t.transaction_date }}</td>
     </tr>
     {% endfor %}

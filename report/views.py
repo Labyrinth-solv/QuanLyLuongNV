@@ -36,10 +36,10 @@ def salary_by_position(request):
     if month and year:
         cursor.execute("""
             SELECT 
-                SUM(total_amount)*1000 AS total_payment,
-                AVG(total_amount)*1000 AS AVG_payment,
-                MIN(total_amount)*1000 AS MIN_payment,
-                MAX(total_amount)*1000 AS MAX_payment
+                SUM(total_amount) AS total_payment,
+                AVG(total_amount) AS AVG_payment,
+                MIN(total_amount) AS MIN_payment,
+                MAX(total_amount) AS MAX_payment
             FROM salarypayment
             WHERE MONTH(payment_date) = %s
                 AND YEAR(payment_date) = %s
@@ -59,15 +59,14 @@ def salary_by_position(request):
         cursor.execute("""
             SELECT 
                 s.rank AS position,
-                COUNT(sp.staff_id) AS total_staff,
-                SUM(spay.total_amount)*1000 AS total_paid
+                COUNT(DISTINCT spay.staff_id) AS total_staff,
+                SUM(spay.total_amount) AS total_paid
             FROM salarypayment spay
-            JOIN staffprofile sp ON spay.staff_id = sp.staff_id
-            JOIN salary s ON sp.salary_id = s.salary_id
+            JOIN salary s ON spay.salary_id = s.salary_id
             WHERE MONTH(spay.payment_date) = %s
-                AND YEAR(spay.payment_date) = %s
+            AND YEAR(spay.payment_date) = %s
             GROUP BY s.rank
-            ORDER BY SUM(spay.total_amount) DESC;
+            ORDER BY total_paid DESC;
         """, [month, year])
 
         rows = cursor.fetchall()
