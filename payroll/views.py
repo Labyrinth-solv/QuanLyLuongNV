@@ -136,7 +136,7 @@ def salary_payment(request):
         penalty_amount=request.POST.get('penalty_money')
         salary_id = request.POST.get('salary_id')
         fund_id = request.POST.get('fund_id')
-        payment_datetime = datetime.datetime.strptime(month + "-15 0:0:00", "%Y-%m-%d %H:%M:%S")
+        payment_datetime = datetime.datetime.strptime(month + "-01 0:0:00", "%Y-%m-%d %H:%M:%S")
 
         fund = fund_DAO.get_fund_by_id(fund_id)
         if not fund:
