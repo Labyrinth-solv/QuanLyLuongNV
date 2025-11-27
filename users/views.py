@@ -134,6 +134,7 @@ def add_staff_view(request):
         print(f"Lỗi truy vấn bậc lương: {e}")
 
     if request.method == 'POST':
+        staff_id   = request.POST.get('staff_id')
         username   = request.POST.get('username')
         password   = request.POST.get('password')
         gender     = request.POST.get('gender')
@@ -150,9 +151,12 @@ def add_staff_view(request):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT MAX(CAST(id AS UNSIGNED)) FROM person")
-                max_id = cursor.fetchone()[0]
-                new_id = str(max_id + 1) if max_id is not None else '1'
+                # cursor.execute("SELECT id FROM person ORDER BY timestamp DESC LIMIT 1")
+                # max_id = cursor.fetchone()[0]
+                # if max_id is None:
+                #     new_id = 'ST001'
+                # new_id = str(max_id + 1) if max_id is not None else '1'
+
 
                 with transaction.atomic():
                     person_query = """
@@ -160,7 +164,7 @@ def add_staff_view(request):
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """
                     cursor.execute(person_query, [
-                        new_id,
+                        staff_id,
                         username,
                         password,
                         start_date,
@@ -175,7 +179,7 @@ def add_staff_view(request):
                         VALUES (%s, %s)
                     """
                     cursor.execute(staff_profile_query, [
-                        new_id,
+                        staff_id,
                         salary_id
                     ])
 
@@ -191,7 +195,7 @@ def add_staff_view(request):
                     cursor.execute(staff_manage_query, [
                         new_manage_id,
                         admin_id,
-                        new_id,
+                        staff_id,
                         "Thêm nhân viên mới",
                         timezone.now().astimezone(ZoneInfo("Asia/Ho_Chi_Minh"))
                     ])
@@ -517,13 +521,11 @@ def leave_history_view(request):
             query = """
                 SELECT 
                     ld.detail_id,       
-                    l.leave_date,       
+                    ld.leavedetail_date,       
                     ld.reason,          
                     ld.status           
-                FROM leavedetail ld
-                JOIN `leave` l ON ld.leave_id = l.leave_id -- `` do leave là từ khóa 
+                FROM leavedetail ld 
                 WHERE ld.staff_id = %s
-                ORDER BY l.leave_date DESC
             """
             cursor.execute(query, [staff_id])
             
@@ -536,6 +538,7 @@ def leave_history_view(request):
     context = {
         'leave_requests': leave_requests
     }
+    print(leave_requests)
     return render(request, 'leave_history.html', context)
 
 def change_password_view(request):

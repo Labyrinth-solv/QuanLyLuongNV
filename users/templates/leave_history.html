@@ -34,7 +34,7 @@
                 {% for req in leave_requests %}
                 <tr>
                     <td>{{ req.detail_id }}</td>
-                    <td>{{ req.leave_date|date:"d/m/Y" }}</td>
+                    <td>{{ req.leavedetail_date|date:"d/m/Y" }}</td>
                     <td>{{ req.reason }}</td>
                     <td>
                         <span class="status-{{ req.status }}">
