@@ -88,8 +88,9 @@
                             <p><strong>Nhân viên:</strong> {{ s.username }}</p>
                             <p><strong>Chức vụ:</strong> {{ s.rank }}</p>
                             <p><strong>Hệ số lương:</strong> {{ s.multiplier }}</p>
-                            <p><strong>Tiền phạt:</strong> {{ s.penalty_money|floatformat:1 }} ({{ s.penalty }})</p>
-                            <p><strong>Thành tiền:</strong> {{ s.total_salary|floatformat:1 }}</p>
+                            <p><strong>Lương tạm tính :</strong> {{ s.amount }}</p>
+                            <p><strong>Tiền phạt:-</strong> {{ s.penalty_money|floatformat:1 }} ({{ s.penalty }})</p>
+                            <p><strong>Thành tiền:</strong> {{ s.final_salary|floatformat:1 }}</p>
 
                             {% if s.is_paid %}
                                 <p><strong>Ngày thanh toán:</strong> {{ s.payment_date|date:"d/m/Y" }}</p>

@@ -181,7 +181,7 @@ def salary_payment(request):
     admin_id=request.session.get('user_id')
     query='''
         SELECT 
-    s1.id, s1.username, s2.salary_id, s2.rank, s2.amount, s2.multiplier,
+    s1.id, s1.username, s2.salary_id, s2.rank, s2.amount, s2.multiplier, (s2.amount*s2.multiplier) as amount,
     COALESCE(sp.total_amount, s2.amount * s2.multiplier) AS total_salary,
     sp.payment_date,
     CASE WHEN sp.payment_date IS NOT NULL THEN 1 ELSE 0 END AS is_paid,
@@ -194,7 +194,15 @@ def salary_payment(request):
         FROM staffmanagement l
         WHERE l.staff_id = s.staff_id
             AND action = 'vang'
-            AND DATE_FORMAT(l.timestamp, '%%Y-%%m') = %s) AS penalty
+            AND DATE_FORMAT(l.timestamp, '%%Y-%%m') = %s) AS penalty,
+    (
+    (s2.amount * s2.multiplier) -
+    (SELECT COUNT(*) * 1000
+        FROM staffmanagement l
+        WHERE l.staff_id = s.staff_id
+          AND l.action = 'vang'
+          AND DATE_FORMAT(l.timestamp, '%%Y-%%m') = %s)
+    ) AS final_salary
     FROM staffprofile s
     JOIN person s1 ON s.staff_id = s1.id
     JOIN salary s2 ON s.salary_id = s2.salary_id
@@ -202,7 +210,7 @@ def salary_payment(request):
         ON sp.staff_id = s.staff_id
        AND DATE_FORMAT(sp.payment_date, '%%Y-%%m') = %s
     '''
-    params = [select_month,select_month,select_month]
+    params = [select_month,select_month,select_month, select_month]
     # Lọc theo trạng thái
     if status == "paid":
         query += " WHERE sp.payment_date IS NOT NULL"
