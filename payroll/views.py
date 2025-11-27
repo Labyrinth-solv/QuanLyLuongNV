@@ -40,7 +40,7 @@ def view_salary(request):
         salary_rank = request.POST.get('salary_rank')
         amount = request.POST.get('amount')
         multiplier = request.POST.get('multiplier')
-
+        new_salary_id=request.POST.get('new_salary_id')
         cursor = conn.cursor(DictCursor)
         # 1. Lấy dữ liệu cũ
         cursor.execute("SELECT `rank`, amount, multiplier FROM salary WHERE salary_id=%s", (salary_id,))
@@ -52,8 +52,8 @@ def view_salary(request):
 
         #2: Update bảng salary
         cursor.execute(
-            "UPDATE salary SET `rank`=%s, amount=%s, multiplier=%s WHERE salary_id=%s",
-            (salary_rank, amount, multiplier, salary_id)
+            "UPDATE salary SET salary_id=%s, `rank`=%s, amount=%s, multiplier=%s WHERE salary_id=%s",
+            (new_salary_id, salary_rank, amount, multiplier, salary_id)
         )
 
         # 3. Ghi lịch sử thay đổi
@@ -67,7 +67,7 @@ def view_salary(request):
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
             """,
-            (admin_id ,salary_id,
+            (admin_id , new_salary_id,
              old_rank, salary_rank,
              old_amount, amount,
              old_multiplier, multiplier)

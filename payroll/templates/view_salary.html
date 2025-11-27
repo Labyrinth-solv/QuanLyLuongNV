@@ -20,7 +20,7 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="salary_id" value="{{ edit_salary.salary_id }}">
-
+                <input type="text" name="new_salary_id" value="{{ edit_salary.salary_id }}">
                 <div>
                     <label>Cấp bậc lương</label>
                     <input type="text" name="salary_rank" value="{{ edit_salary.rank }}" required>
