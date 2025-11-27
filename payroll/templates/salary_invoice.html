@@ -1,0 +1,104 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Bảng lương{% endblock %}
+
+
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/payroll.css' %}">
+
+
+<div>
+    <h1>Bảng lương</h1>
+
+    {% if edit_salary %}
+    <div>
+        <div>
+            Sửa mức lương: {{ edit_salary.salary_id }}
+        </div>
+        <div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="salary_id" value="{{ edit_salary.salary_id }}">
+                <input type="text" name="new_salary_id" value="{{ edit_salary.salary_id }}">
+                <div>
+                    <label>Cấp bậc lương</label>
+                    <input type="text" name="salary_rank" value="{{ edit_salary.rank }}" required>
+                </div>
+
+                <div>
+                    <label>Mức lương</label>
+                    <input type="number" name="amount" value="{{ edit_salary.amount }}" required>
+                </div>
+
+                <div>
+                    <label>Hệ số</label>
+                    <input type="number" name="multiplier" step="0.01" value="{{ edit_salary.multiplier }}" required>
+                </div>
+
+                <button type="submit">Lưu thay đổi</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div>
+        <a href="{% url 'payroll:view_history_salary' %}">Xem lịch sử thay đổi</a>
+        <a href="{% url 'payroll:add_salary' %}">Thêm mức lương mới</a>
+
+        <form id="editForm" method="get">
+            <input type="hidden" name="salary_id" id="salary_id">
+            <button type="submit">Sửa mức lương</button>
+        </form>
+    </div>
+
+    <div>
+        <table border="1" cellspacing="0" cellpadding="5">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>ID</th>
+                    <th>Chức vụ</th>
+                    <th>Lương</th>
+                    <th>Hệ số lương</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for s in salary %}
+                <tr class="clickable-row">
+                    <td><input type="radio" name="selected_id" value="{{ s.salary_id }}"></td>
+                    <td>{{ s.salary_id }}</td>
+                    <td>{{ s.rank }}</td>
+                    <td>{{ s.amount|floatformat:0 }}</td>
+                    <td>{{ s.multiplier }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Chưa có dữ liệu</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.clickable-row').forEach(row => {
+    row.addEventListener('click', function(e){
+        if(e.target.type !== 'radio'){
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+        }
+
+        document.querySelectorAll('.clickable-row').forEach(r => r.classList.remove('table-primary'));
+        this.classList.add('table-primary');
+
+        const selectedId = this.querySelector('input[type="radio"]').value;
+        document.getElementById('salary_id').value = selectedId;
+    });
+});
+</script>
+
+{% endblock %}

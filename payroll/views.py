@@ -9,6 +9,15 @@ from django.conf import settings
 from funds import DAO as fund_DAO
 from django.contrib import messages
 
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+import os
 
 conn_settings = settings.DATABASES['default']
 conn = pymysql.connect(
@@ -226,3 +235,98 @@ def salary_payment(request):
                                                    'selected_month':select_month,
                                                    'admin_id':admin_id,
                                                    "selected_status": status})
+
+
+def export_salary_invoice(request, payment_id):
+    cursor = conn.cursor(DictCursor)
+
+    sql = """
+        SELECT 
+            sp.payment_id,
+            sp.total_amount,
+            sp.payment_date,
+            p.username,
+            s.salary_id,
+            s.amount,
+            s.multiplier,
+            DATE_FORMAT(sp.payment_date, '%%Y-%%m') AS month,
+            (
+                SELECT COUNT(*)*1000 
+                FROM staffmanagement l
+                WHERE l.staff_id = sp.staff_id
+                AND l.action='vang'
+                AND DATE_FORMAT(l.timestamp, '%%Y-%%m') = DATE_FORMAT(sp.payment_date,'%%Y-%%m')
+            ) AS penalty_money
+        FROM salarypayment sp
+        JOIN person p ON sp.staff_id = p.id
+        JOIN staffprofile spf ON sp.staff_id = spf.staff_id
+        JOIN salary s ON spf.salary_id = s.salary_id
+        WHERE sp.payment_id = %s
+    """
+
+    cursor.execute(sql, (payment_id,))
+    payment = cursor.fetchone()
+    cursor.close()
+
+    if not payment:
+        return HttpResponse("Không tìm thấy hóa đơn", status=404)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename=invoice_{payment_id}.pdf'
+
+    # --- Đăng ký font DejaVu ---
+    font_path = os.path.join(settings.BASE_DIR, "static", "fonts", "DejaVuSans.ttf")
+    font_path = os.path.normpath(font_path)
+    pdfmetrics.registerFont(TTFont('DejaVu', font_path))
+
+    # --- Tạo document PDF ---
+    doc = SimpleDocTemplate(response, pagesize=A4, 
+                            rightMargin=2*cm, leftMargin=2*cm, 
+                            topMargin=2*cm, bottomMargin=2*cm)
+    elements = []
+
+    # --- Styles ---
+    styles = getSampleStyleSheet()
+    # Tiêu đề
+    styles.add(ParagraphStyle(name='MyTitle', fontName='DejaVu', fontSize=18, alignment=1, spaceAfter=20))
+    # Normal text
+    styles.add(ParagraphStyle(name='NormalDejaVu', fontName='DejaVu', fontSize=12, spaceAfter=6))
+
+    # --- Tiêu đề ---
+    elements.append(Paragraph("HÓA ĐƠN THANH TOÁN LƯƠNG", styles['MyTitle']))
+
+    # --- Thông tin nhân viên ---
+    info_lines = [
+        f"Mã hóa đơn: {payment['payment_id']}",
+        f"Nhân viên: {payment['username']}",
+        f"Tháng: {payment['month']}",
+        f"Ngày thanh toán: {payment['payment_date']}"
+    ]
+    for line in info_lines:
+        elements.append(Paragraph(line, styles['NormalDejaVu']))
+    elements.append(Spacer(1, 12))
+
+    # --- Bảng lương ---
+    data = [
+        ['Mục', 'Số tiền (VNĐ)'],
+        ['Lương cơ bản', f"{payment['amount']:,}"],
+        ['Hệ số', f"{payment['multiplier']}"],
+        ['Tiền phạt', f"{payment['penalty_money']:,}"],
+        ['Tổng nhận', f"{payment['total_amount']:,}"]
+    ]
+
+    table = Table(data, colWidths=[10*cm, 5*cm])
+    table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'DejaVu'),
+        ('FONTSIZE', (0,0), (-1,-1), 12),
+        ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR',(0,0),(-1,0),colors.whitesmoke),
+        ('ALIGN',(0,0),(-1,-1),'CENTER'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+    return response
